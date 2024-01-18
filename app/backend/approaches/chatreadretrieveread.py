@@ -182,6 +182,8 @@ class ChatReadRetrieveReadApproach(ChatApproach):
                     original_user_query,
                 ),
                 ThoughtStep(
+                    "Search prompt",
+                    self.query_prompt_template,
                     "Generated search query",
                     query_text,
                     {"use_semantic_captions": use_semantic_captions, "has_vector": has_vector},
@@ -195,7 +197,7 @@ class ChatReadRetrieveReadApproach(ChatApproach):
             # Azure Open AI takes the deployment name as the model name
             model=self.chatgpt_deployment if self.chatgpt_deployment else self.chatgpt_model,
             messages=messages,
-            temperature=overrides.get("temperature") or 0.7,
+            temperature=0.0,
             max_tokens=response_token_limit,
             n=1,
             stream=should_stream,
