@@ -1,5 +1,6 @@
 import asyncio
 import os
+import re
 from typing import List, Optional
 
 from azure.search.documents.indexes.models import (
@@ -152,7 +153,7 @@ class SearchManager:
                 documents = [
                     {
                         "id": f"{section.content.filename_to_id()}-page-{section_index + batch_index * MAX_BATCH_SIZE}",
-                        "content": section.split_page.text,
+                        "content": re.sub(r"(?:After Visit Summary, Analyst, App).*[\,]", "", section.split_page.text.replace("PROPRIETARY INFORMATION - This item and its contents may not be accessed, used, modified, reproduced, performed, displayed, distributed or disclosed unless and only to the extent expressly authorized by an agreement with Epic.", "").replace("This item is a Commercial Item, as that term is defined at 48 C.F.R. Sec. 2.101. It contains trade secrets and commercial information that are confidential, privileged and exempt from disclosure under the Freedom of Information Act and prohibited from disclosure under the Trade Secrets Act.", "").replace("After Visit Summary, Analyst, App Orchard, ASAP, Beaker, BedTime, Bones, Break-the-Glass, Caboodle, Cadence, Canto, Care Everywhere, Charge Router, Chronicles, Clarity, Cogito ergo sum, Cohort, Colleague, Community Connect, Cupid, Epic, EpicCare, EpicCare Link, Epicenter, Epic Earth, EpicLink, EpicWeb, Good Better Best, Grand Central, Haiku, Happy Together, Healthy People, Healthy Planet, Hyperspace, Identity, IntraConnect, Kaleidoscope, Limerick, Lucy, MyChart, OpTime, OutReach, Patients Like Mine, Phoenix, Powered by Epic, Prelude, Radar, RedAlert, Resolute, Revenue Guardian, Rover, SmartForms, Sonnet, Stork, Tapestry, Trove, Welcome, Willow, Wisdom, and With the Patient at the Heart are registered trademarks, trademarks or service marks of Epic Systems Corporation in the United States of America and/or other countries.", "") .replace("Other company, product and service names referenced herein may be trademarks or service marks of their respective owners. U.S. and international patents issued and pending.", "")),
                         "category": section.category,
                         "sourcepage": BlobManager.blob_image_name_from_file_page(
                             filename=section.content.filename(), page=section.split_page.page_num
@@ -168,7 +169,7 @@ class SearchManager:
                 ]
                 if self.embeddings:
                     embeddings = await self.embeddings.create_embeddings(
-                        texts=[section.split_page.text for section in batch]
+                        texts=[re.sub(r"(?:After Visit Summary, Analyst, App).*[\,]", "", section.split_page.text.replace("PROPRIETARY INFORMATION - This item and its contents may not be accessed, used, modified, reproduced, performed, displayed, distributed or disclosed unless and only to the extent expressly authorized by an agreement with Epic.", "").replace("This item is a Commercial Item, as that term is defined at 48 C.F.R. Sec. 2.101. It contains trade secrets and commercial information that are confidential, privileged and exempt from disclosure under the Freedom of Information Act and prohibited from disclosure under the Trade Secrets Act.", "").replace("After Visit Summary, Analyst, App Orchard, ASAP, Beaker, BedTime, Bones, Break-the-Glass, Caboodle, Cadence, Canto, Care Everywhere, Charge Router, Chronicles, Clarity, Cogito ergo sum, Cohort, Colleague, Community Connect, Cupid, Epic, EpicCare, EpicCare Link, Epicenter, Epic Earth, EpicLink, EpicWeb, Good Better Best, Grand Central, Haiku, Happy Together, Healthy People, Healthy Planet, Hyperspace, Identity, IntraConnect, Kaleidoscope, Limerick, Lucy, MyChart, OpTime, OutReach, Patients Like Mine, Phoenix, Powered by Epic, Prelude, Radar, RedAlert, Resolute, Revenue Guardian, Rover, SmartForms, Sonnet, Stork, Tapestry, Trove, Welcome, Willow, Wisdom, and With the Patient at the Heart are registered trademarks, trademarks or service marks of Epic Systems Corporation in the United States of America and/or other countries.", "") .replace("Other company, product and service names referenced herein may be trademarks or service marks of their respective owners. U.S. and international patents issued and pending.", "")) for section in batch]
                     )
                     for i, document in enumerate(documents):
                         document["embedding"] = embeddings[i]

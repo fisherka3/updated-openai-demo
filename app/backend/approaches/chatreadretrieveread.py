@@ -134,6 +134,8 @@ class ChatReadRetrieveReadApproach(ChatApproach):
             few_shots=self.query_prompt_few_shots,
         )
 
+        search_query_msg = messages
+
         chat_completion: ChatCompletion = await self.openai_client.chat.completions.create(
             messages=messages,  # type: ignore
             # Azure Open AI takes the deployment name as the model name
@@ -189,12 +191,16 @@ class ChatReadRetrieveReadApproach(ChatApproach):
             "thoughts": [
                 ThoughtStep(
                     "[CRR]: search prompt",
-                    self.query_prompt_template,
+                    [str(s) for s in search_query_msg],
                 ),
                 ThoughtStep(
                     "Generated search query",
                     query_text,
                     {"use_semantic_captions": use_semantic_captions, "has_vector": has_vector},
+                ),
+                ThoughtStep(
+                    "history",
+                    [str(h) for h in history],
                 ),
                 ThoughtStep("Results", [result.serialize_for_results() for result in results]),
                 ThoughtStep("Prompt", [str(message) for message in messages]),
