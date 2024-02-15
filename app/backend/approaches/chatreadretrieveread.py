@@ -105,7 +105,7 @@ class ChatReadRetrieveReadApproach(ChatApproach):
         use_semantic_ranker = True if overrides.get("semantic_ranker") and has_text else False
 
         original_user_query = history[-1]["content"]
-        user_query_request = "Generate search query for: " + original_user_query
+        user_query_request = str(original_user_query)
 
         functions = [
             {

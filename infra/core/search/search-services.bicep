@@ -4,7 +4,7 @@ param location string = resourceGroup().location
 param tags object = {}
 
 param sku object = {
-  name: 'standard'
+  name: 'basic'
 }
 
 param authOptions object = {}
@@ -33,6 +33,7 @@ param replicaCount int = 1
   'disabled'
   'free'
   'standard'
+  'basic'
 ])
 param semanticSearch string = 'disabled'
 

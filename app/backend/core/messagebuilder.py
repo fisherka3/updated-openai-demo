@@ -46,8 +46,7 @@ class MessageBuilder:
             message = ChatCompletionSystemMessageParam(role="system", content=unicodedata.normalize("NFC", content))
         elif role == "assistant" and isinstance(content, str):
             message = ChatCompletionAssistantMessageParam(
-                role="assistant", content=unicodedata.normalize("NFC", content)
-            )
+                role="assistant", content=unicodedata.normalize("NFC", content))
         else:
             raise ValueError(f"Invalid role: {role}")
         self.messages.insert(index, message)

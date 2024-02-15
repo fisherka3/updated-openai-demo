@@ -116,6 +116,7 @@ class Approach:
         if use_semantic_ranker and query_text:
             results = await self.search_client.search(
                 search_text=query_text,
+                scoring_statistics="global",
                 filter=filter,
                 query_type=QueryType.SEMANTIC,
                 query_language=self.query_language,

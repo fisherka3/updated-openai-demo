@@ -21,10 +21,12 @@ class ChatApproach(Approach, ABC):
     ASSISTANT = "assistant"
 
     query_prompt_few_shots = [
-        {"role": USER, "content": "How did crypto do last year?"},
-        {"role": ASSISTANT, "content": "Summarize Cryptocurrency Market Dynamics from last year"},
-        {"role": USER, "content": "What are my health plans?"},
-        {"role": ASSISTANT, "content": "Show available health plans"},
+        {"role": USER, "content": "How do I find which OnBase documents have deficiencies?"},
+        {"role": ASSISTANT, "content": "find OnBase documents deficiencies"},
+        {"role": USER, "content": "How do I document home visits with the Remote Client?"},
+        {"role": ASSISTANT, "content": "document home visits remote client"},
+        {"role": USER, "content": "How do I enter order for continuous tube feeding?"},
+        {"role": ASSISTANT, "content": "order continous tube feeding"},
     ]
     NO_RESPONSE = "0"
 
