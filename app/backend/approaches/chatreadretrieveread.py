@@ -105,7 +105,26 @@ class ChatReadRetrieveReadApproach(ChatApproach):
         use_semantic_ranker = True if overrides.get("semantic_ranker") and has_text else False
 
         original_user_query = history[-1]["content"]
-        user_query_request = str(original_user_query)
+        user_query_request = str(original_user_query)    
+
+        last_response = ""
+        all_hx = []
+        for line in history:
+            if line['role']=='assistant':
+                last_response = str(line['content'])
+            if line['role']=='history':
+                all_hx = line['content']
+
+        if last_response: all_hx.append({'role': 'assistant2', 'content': last_response})
+        all_hx.append({'role':'user1', 'content':user_query_request})
+        history = [line for line in history if line['role'] != 'history']
+
+        query_hx = []
+        for line in all_hx:
+            if line['role']=='user1':
+                query_hx.append({'role':'user', 'content':line['content']})
+            if line['role']=='assistant1':
+                query_hx.append({'role':'assistant', 'content':line['content']})
 
         functions = [
             {
@@ -128,7 +147,7 @@ class ChatReadRetrieveReadApproach(ChatApproach):
         messages = self.get_messages_from_history(
             system_prompt=self.query_prompt_template,
             model_id=self.chatgpt_model,
-            history=history,
+            history=query_hx,
             user_content=user_query_request,
             max_tokens=self.chatgpt_token_limit - len(user_query_request),
             few_shots=self.query_prompt_few_shots,
@@ -160,10 +179,13 @@ class ChatReadRetrieveReadApproach(ChatApproach):
         if not has_text:
             query_text = None
 
+        all_hx.append({'role': 'assistant1', 'content': query_text})
+
         results = await self.search(top, query_text, filter, vectors, use_semantic_ranker, use_semantic_captions)
 
         sources_content = self.get_sources_content(results, use_semantic_captions, use_image_citation=False)
         content = "\n".join(sources_content)
+        all_hx.append({'role': 'user2', 'content': original_user_query + " \n\n Sources: \n" + content})
 
         # STEP 3: Generate a contextual and content specific answer using the search results and chat history
 
@@ -175,18 +197,37 @@ class ChatReadRetrieveReadApproach(ChatApproach):
 
         response_token_limit = 1024
         messages_token_limit = self.chatgpt_token_limit - response_token_limit
-        messages = self.get_messages_from_history(
+
+        chat_hx = []
+        for line in all_hx:
+            if line['role']=='user2':
+                chat_hx.append({'role':'user', 'content':line['content']})
+            if line['role']=='assistant2':
+                chat_hx.append({'role':'assistant', 'content':line['content']})
+
+        chat_messages = self.get_messages_from_history(
             system_prompt=system_message,
             model_id=self.chatgpt_model,
-            history=history,
+            history=chat_hx,
             # Model does not handle lengthy system messages well. Moving sources to latest user conversation to solve follow up questions prompt.
-            user_content=original_user_query + "\n\nSources:\n" + content,
+            user_content=original_user_query + "\n\n Sources: \n" + content,
             max_tokens=messages_token_limit,
         )
 
         data_points = {"text": sources_content}
 
+        chat_coroutine = self.openai_client.chat.completions.create(
+            # Azure Open AI takes the deployment name as the model name
+            model=self.chatgpt_deployment if self.chatgpt_deployment else self.chatgpt_model,
+            messages=chat_messages,
+            temperature=0.0,
+            max_tokens=response_token_limit,
+            n=1,
+            stream=should_stream,
+        )
+
         extra_info = {
+            "history": all_hx,
             "data_points": data_points,
             "thoughts": [
                 ThoughtStep(
@@ -199,21 +240,16 @@ class ChatReadRetrieveReadApproach(ChatApproach):
                     {"use_semantic_captions": use_semantic_captions, "has_vector": has_vector},
                 ),
                 ThoughtStep(
-                    "history",
+                    "history:",
                     [str(h) for h in history],
                 ),
+                ThoughtStep(
+                    "all history!",
+                    [str(h) for h in all_hx],
+                ),
                 ThoughtStep("Results", [result.serialize_for_results() for result in results]),
-                ThoughtStep("Prompt", [str(message) for message in messages]),
+                ThoughtStep("Prompt", [str(message) for message in chat_messages]),
             ],
         }
 
-        chat_coroutine = self.openai_client.chat.completions.create(
-            # Azure Open AI takes the deployment name as the model name
-            model=self.chatgpt_deployment if self.chatgpt_deployment else self.chatgpt_model,
-            messages=messages,
-            temperature=0.0,
-            max_tokens=response_token_limit,
-            n=1,
-            stream=should_stream,
-        )
         return (extra_info, chat_coroutine)
