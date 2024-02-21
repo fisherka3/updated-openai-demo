@@ -22,10 +22,10 @@ class ChatApproach(Approach, ABC):
 
     query_prompt_few_shots = [
         {"role": USER, "content": "How do I find which OnBase documents have deficiencies?"},
-        {"role": ASSISTANT, "content": "find OnBase documents deficiencies"},
+        {"role": ASSISTANT, "content": "OnBase documents deficiencies"},
         {"role": USER, "content": "How do I document home visits with the Remote Client?"},
         {"role": ASSISTANT, "content": "document home visits remote client"},
-        {"role": USER, "content": "How do I enter order for continuous tube feeding?"},
+        {"role": USER, "content": "How do I enter orders for continuous tube feeding?"},
         {"role": ASSISTANT, "content": "order continous tube feeding"},
     ]
     NO_RESPONSE = "0"
@@ -39,14 +39,13 @@ class ChatApproach(Approach, ABC):
     Make sure the last question ends with ">>".
     """
 
-    query_prompt_template = """Below is a history of the conversation so far, and a new question asked by the user that needs to be answered by searching a knowledge base.
-    Generate a search query based on the conversation and the new question to search the knowledge base.
-    Do not include cited source filenames and document names e.g info.txt or doc.pdf in the search query terms.
-    Do not include any text inside [] or <<>> in the search query terms.
-    Do not include any special characters like '+'.
-    If the question is not in English, translate the question to English before generating the search query.
-    If you cannot generate a search query, return just the number 0.
-    """
+    query_prompt_template = "You are an assistant who generates terms based on a user question to be used as a search query in a very simple search engine. " +\
+    "Below is a history of the conversation so far followed by a new question asked by the user. " +\
+    "Your job is to generate terms for a search query based the user's question. " +\
+    "Do not include any special characters. " +\
+    "If the question is not in English, translate the question to English before generating the search query. " +\
+    "If you cannot generate a search query, return just the number 0. "
+    
 
     @property
     @abstractmethod

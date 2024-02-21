@@ -52,23 +52,28 @@ class ChatReadRetrieveReadApproach(ChatApproach):
 
     @property
     def system_message_chat_conversation(self):
-        return """You are an assistant helping users of Epic software answer questions about how to perform tasks using Epic. 
-        The content below contains information from sources created to help Epic users. 
-        Use ONLY the information contained within the sources to answer user questions. 
-        Answer ONLY with the content listed below. 
-        DO NOT generate responses that don't use the content from sources listed below. 
-        If there isn't enough information provided in the sources below, then say you don't know. 
-        If asking a clarifying question to the user would help, then ask the question. 
-        For tabular information return it as an html table. Do not return markdown format.  
-        If the question is not in English, answer in the language used in the question. 
-        Each source has a name followed by colon and the actual information,  e.g., Sources: sourcename.pdf: information. 
-        Always include the source name for each fact you use in the response. 
-        Use square brackets to reference the source, for example [info1.txt]. 
-        Don't combine sources, list each source separately, for example [info1.txt][info2.pdf].
-        Below is a history of previous questions that have been answered.
+        prompt = "You are an assistant helping users of Epic software answer questions about how to perform tasks using Epic. " +\
+        "Below is a history of the conversation so far followed by a new user question. " +\
+        """The user will provide a question along with a list of sources and information from the sources. For example: 
+        user question 
+        Sources: 
+        info1.pdf: information from info1, 
+        info2.pdf: information from info2, 
+        info3.pdf: information from info3 
+        """ +\
+        "Use ONLY the information contained within the sources to answer user's questions. " +\
+        "Concisely answer ONLY the question asked by using ONLY the information from the sources provided by the user. " +\
+        "DO NOT generate responses that don't use information from the sources! " +\
+        "If there isn't enough information provided in the sources, then say you don't know. " +\
+        "If asking a clarifying question to the user would help, then ask the question. " +\
+        "Do not provide tables or use examples within your response. " +\
+        "You must ALWAYS include the source name for each fact you use in your response." +\
+        "Use square brackets to reference the source, for example [info1.pdf]. "+\
+        """Do not combine sources, you must list each source referenced separately, for example: [info1.pdf][info2.pdf]. 
         {follow_up_questions_prompt}
         {injected_prompt}
         """
+        return prompt
 
     @overload
     async def run_until_final_call(
@@ -106,6 +111,25 @@ class ChatReadRetrieveReadApproach(ChatApproach):
 
         original_user_query = history[-1]["content"]
         user_query_request = str(original_user_query)    
+
+        repeat_prompt = "You are an assistant helping users of Epic software answer questions about how to perform tasks using Epic. " +\
+        "Above is a history of the conversation so far. " +\
+        """The user will provide a new question along with a list of sources and information from the sources. For example: 
+        user question 
+        Sources: 
+        info1.pdf: information from info1, 
+        info2.pdf: information from info2, 
+        info3.pdf: information from info3 
+        """ +\
+        "Use ONLY the information contained within the sources to answer user's questions. " +\
+        "Concisely answer ONLY the question asked by using ONLY the information from the sources provided by the user. " +\
+        "DO NOT generate responses that don't use information from the sources! " +\
+        "If there isn't enough information provided in the sources, then say you don't know. " +\
+        "If asking a clarifying question to the user would help, then ask the question. " +\
+        "Do not provide tables or use examples within your response. " +\
+        "You must ALWAYS include the source name for each fact you use in your response." +\
+        "Use square brackets to reference the source, for example [info1.pdf]. " +\
+        "Do not combine sources, you must list each source referenced separately, for example: [info1.pdf][info2.pdf]. "
 
         last_response = ""
         all_hx = []
@@ -184,7 +208,7 @@ class ChatReadRetrieveReadApproach(ChatApproach):
         results = await self.search(top, query_text, filter, vectors, use_semantic_ranker, use_semantic_captions)
 
         sources_content = self.get_sources_content(results, use_semantic_captions, use_image_citation=False)
-        content = "\n".join(sources_content)
+        content = ",\n".join(sources_content)
         all_hx.append({'role': 'user2', 'content': original_user_query + " \n\n Sources: \n" + content})
 
         # STEP 3: Generate a contextual and content specific answer using the search results and chat history
@@ -210,9 +234,12 @@ class ChatReadRetrieveReadApproach(ChatApproach):
             model_id=self.chatgpt_model,
             history=chat_hx,
             # Model does not handle lengthy system messages well. Moving sources to latest user conversation to solve follow up questions prompt.
-            user_content=original_user_query + "\n\n Sources: \n" + content,
+            user_content=original_user_query + "\n Sources: \n" + content,
             max_tokens=messages_token_limit,
         )
+
+        if len(chat_messages) > 5:
+            chat_messages[-1:-1] = [{'role':'system', 'content': repeat_prompt}]
 
         data_points = {"text": sources_content}
 

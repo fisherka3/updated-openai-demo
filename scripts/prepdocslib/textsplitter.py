@@ -23,7 +23,7 @@ class TextSplitter:
         self.word_breaks = [",", ";", ":", " ", "(", ")", "[", "]", "{", "}", "\t", "\n"]
         self.max_section_length = 4000
         self.sentence_search_limit = 100
-        self.section_overlap = 50
+        self.section_overlap = 100
         self.verbose = verbose
         self.has_image_embeddings = has_image_embeddings
 
