@@ -13,6 +13,7 @@ from approaches.chatapproach import ChatApproach
 from core.authentication import AuthenticationHelper
 from core.modelhelper import get_token_limit
 
+import re
 
 class ChatReadRetrieveReadApproach(ChatApproach):
 
@@ -112,6 +113,8 @@ class ChatReadRetrieveReadApproach(ChatApproach):
         original_user_query = history[-1]["content"]
         user_query_request = str(original_user_query)    
 
+        ignore_words_list = ['epic', 'tipsheet', 'guide']
+
         repeat_prompt = "You are an assistant helping users of Epic software answer questions about how to perform tasks using Epic. " +\
         "Above is a history of the conversation so far. " +\
         """The user will provide a new question along with a list of sources and information from the sources. For example: 
@@ -202,6 +205,16 @@ class ChatReadRetrieveReadApproach(ChatApproach):
         # Only keep the text query if the retrieval mode uses text, otherwise drop it
         if not has_text:
             query_text = None
+
+        og_query_text = query_text
+
+        for word in ignore_words_list:
+            if word != 'epic':
+                query_text = re.sub(r'(?i)'+ word + "(\s|$|s)", "", query_text)
+            else:
+                query_text = re.sub(r'(?i)('+ word + "(\s|$) |" + word + "s(\s|$))", "", query_text)
+        
+        if query_text.strip() == "": query_text = query_text.strip() + og_query_text
 
         all_hx.append({'role': 'assistant1', 'content': query_text})
 
