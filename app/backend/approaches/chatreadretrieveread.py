@@ -212,7 +212,7 @@ class ChatReadRetrieveReadApproach(ChatApproach):
             if word != 'epic':
                 query_text = re.sub(r'(?i)'+ word + "(\s|$|s)", "", query_text)
             else:
-                query_text = re.sub(r'(?i)('+ word + "(\s|$) |" + word + "s(\s|$))", "", query_text)
+                query_text = re.sub(r"(?i)("+ word + "(\s|$))|(" + word + "s(\s|$))", "", query_text)
         
         if query_text.strip() == "": query_text = query_text.strip() + og_query_text
 
