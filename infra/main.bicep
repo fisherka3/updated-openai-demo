@@ -68,11 +68,23 @@ param computerVisionResourceGroupName string = ''
 param computerVisionResourceGroupLocation string = 'eastus' // Vision vectorize API is yet to be deployed globally
 param computerVisionSkuName string = 'S1'
 
-param chatGptDeploymentName string // Set in main.parameters.json
-param chatGptDeploymentCapacity int = 30
+//param chatGptDeploymentName string // Set in main.parameters.json
+//param chatGptDeploymentCapacity int = 30
+// this is an issue.. needs to be from .env -- 4o-mini causes error?
+//param chatGptModelName string = (openAiHost == 'azure') ? 'gpt-35-turbo-16k' : 'gpt-3.5-turbo-16k'
+//param chatGptModelVersion string = '0613'
 param chatGpt4vDeploymentCapacity int = 10
-param chatGptModelName string = (openAiHost == 'azure') ? 'gpt-35-turbo-16k' : 'gpt-3.5-turbo-16k'
-param chatGptModelVersion string = '0613'
+param chatGptModelName string = ''
+param chatGptDeploymentName string = ''
+param chatGptDeploymentVersion string = ''
+param chatGptDeploymentCapacity int = 0
+var chatGpt = {
+  modelName: !empty(chatGptModelName) ? chatGptModelName : startsWith(openAiHost, 'azure') ? 'gpt-35-turbo' : 'gpt-3.5-turbo'
+  deploymentName: !empty(chatGptDeploymentName) ? chatGptDeploymentName : 'chat'
+  deploymentVersion: !empty(chatGptDeploymentVersion) ? chatGptDeploymentVersion : '0613'
+  deploymentCapacity: chatGptDeploymentCapacity != 0 ? chatGptDeploymentCapacity : 30
+}
+
 param embeddingDeploymentName string // Set in main.parameters.json
 param embeddingDeploymentCapacity int = 30
 param embeddingModelName string = 'text-embedding-ada-002'
@@ -244,18 +256,6 @@ module backend 'core/host/appservice.bicep' = {
 }
 
 var defaultOpenAiDeployments = [
-  {
-    name: chatGptDeploymentName
-    model: {
-      format: 'OpenAI'
-      name: chatGptModelName
-      version: chatGptModelVersion
-    }
-    sku: {
-      name: 'Standard'
-      capacity: chatGptDeploymentCapacity
-    }
-  }
   {
     name: embeddingDeploymentName
     model: {

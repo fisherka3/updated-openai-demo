@@ -14,6 +14,47 @@ from core.authentication import AuthenticationHelper
 from core.modelhelper import get_token_limit
 
 import re
+from azure.cosmos.aio import CosmosClient
+from azure.cosmos import exceptions
+import uuid
+from datetime import datetime
+import os
+
+AZURE_COSMOSDB_ACCOUNT="db-temp-testingauth"
+AZURE_COSMOSDB_DATABASE="db_conversation_history"
+AZURE_COSMOSDB_CONVERSATIONS_CONTAINER="conversations"
+AZURE_COSMOSDB_ACCOUNT_KEY = os.getenv("AZURE_COSMOSDB_ACCOUNT_KEY")
+
+try:
+    cosmos_endpoint = f'https://{AZURE_COSMOSDB_ACCOUNT}.documents.azure.com:443/'
+    credential = AZURE_COSMOSDB_ACCOUNT_KEY
+    database_name=AZURE_COSMOSDB_DATABASE
+    container_name=AZURE_COSMOSDB_CONVERSATIONS_CONTAINER
+        
+except Exception as e:
+    raise ValueError("Exception in CosmosDB initialization", e)
+    cosmos_endpoint = None
+    raise e
+
+try:
+    cosmosdb_client = CosmosClient(cosmos_endpoint, credential=credential)
+except exceptions.CosmosHttpResponseError as e:
+    if e.status_code == 401:
+        raise ValueError("Invalid credentials") from e
+    else:
+        raise ValueError("Invalid CosmosDB endpoint") from e
+
+try:
+    database_client = cosmosdb_client.get_database_client(database_name)
+except exceptions.CosmosResourceNotFoundError:
+    raise ValueError("Invalid CosmosDB database name") 
+ 
+
+try:
+    container_client = database_client.get_container_client(container_name)
+except exceptions.CosmosResourceNotFoundError:
+    raise ValueError("Invalid CosmosDB container name") 
+
 
 class ChatReadRetrieveReadApproach(ChatApproach):
 
@@ -68,6 +109,7 @@ class ChatReadRetrieveReadApproach(ChatApproach):
         "If there isn't enough information provided in the sources, then say you don't know. " +\
         "If asking a clarifying question to the user would help, then ask the question. " +\
         "Do not provide tables or use examples within your response. " +\
+        "Do not bold text in your response. " +\
         "You must ALWAYS include the source name for each fact you use in your response." +\
         "Use square brackets to reference the source, for example [info1.pdf]. "+\
         """Do not combine sources, you must list each source referenced separately, for example: [info1.pdf][info2.pdf]. 
@@ -111,7 +153,20 @@ class ChatReadRetrieveReadApproach(ChatApproach):
         use_semantic_ranker = True if overrides.get("semantic_ranker") and has_text else False
 
         original_user_query = history[-1]["content"]
-        user_query_request = str(original_user_query)    
+        user_query_request = str(original_user_query)
+
+        conversation = {
+            'id': str(uuid.uuid4()),
+            'createdAt': datetime.utcnow().isoformat(),  
+            'role': 'user',
+            'content': user_query_request
+        }
+
+        try:
+            await container_client.upsert_item(conversation) 
+        except exceptions.CosmosHttpResponseError as e:
+            print(f"Error in create_convos upserting question: {e}")
+    
 
         ignore_words_list = ['epic', 'tipsheet', 'guide']
 
@@ -218,11 +273,35 @@ class ChatReadRetrieveReadApproach(ChatApproach):
 
         all_hx.append({'role': 'assistant1', 'content': query_text})
 
+        conversation = {
+            'id': str(uuid.uuid4()),
+            'createdAt': datetime.utcnow().isoformat(),  
+            'role': 'query',
+            'content': query_text
+        }
+
+        try:
+            await container_client.upsert_item(conversation) 
+        except exceptions.CosmosHttpResponseError as e:
+            print(f"Error in create_convos upserting query: {e}")
+
         results = await self.search(top, query_text, filter, vectors, use_semantic_ranker, use_semantic_captions)
 
         sources_content = self.get_sources_content(results, use_semantic_captions, use_image_citation=False)
         content = ",\n".join(sources_content)
         all_hx.append({'role': 'user2', 'content': original_user_query + " \n\n Sources: \n" + content})
+
+        conversation = {
+            'id': str(uuid.uuid4()),
+            'createdAt': datetime.utcnow().isoformat(),  
+            'role': 'results',
+            'content': content
+        }
+
+        try:
+            await container_client.upsert_item(conversation) 
+        except exceptions.CosmosHttpResponseError as e:
+            print(f"Error in create_convos upserting results: {e}")
 
         # STEP 3: Generate a contextual and content specific answer using the search results and chat history
 
@@ -232,7 +311,7 @@ class ChatReadRetrieveReadApproach(ChatApproach):
             self.follow_up_questions_prompt_content if overrides.get("suggest_followup_questions") else "",
         )
 
-        response_token_limit = 1024
+        response_token_limit = 4000
         messages_token_limit = self.chatgpt_token_limit - response_token_limit
 
         chat_hx = []

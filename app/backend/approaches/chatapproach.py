@@ -12,7 +12,46 @@ from openai.types.chat import (
 
 from approaches.approach import Approach
 from core.messagebuilder import MessageBuilder
+from azure.cosmos.aio import CosmosClient
+from azure.cosmos import exceptions
+import uuid
+from datetime import datetime
+import os
 
+AZURE_COSMOSDB_ACCOUNT="db-temp-testingauth"
+AZURE_COSMOSDB_DATABASE="db_conversation_history"
+AZURE_COSMOSDB_CONVERSATIONS_CONTAINER="conversations"
+AZURE_COSMOSDB_ACCOUNT_KEY = os.getenv("AZURE_COSMOSDB_ACCOUNT_KEY")
+
+try:
+    cosmos_endpoint = f'https://{AZURE_COSMOSDB_ACCOUNT}.documents.azure.com:443/'
+    credential = AZURE_COSMOSDB_ACCOUNT_KEY
+    database_name=AZURE_COSMOSDB_DATABASE
+    container_name=AZURE_COSMOSDB_CONVERSATIONS_CONTAINER
+        
+except Exception as e:
+    raise ValueError("Exception in CosmosDB initialization", e)
+    cosmos_endpoint = None
+    raise e
+
+try:
+    cosmosdb_client = CosmosClient(cosmos_endpoint, credential=credential)
+except exceptions.CosmosHttpResponseError as e:
+    if e.status_code == 401:
+        raise ValueError("Invalid credentials") from e
+    else:
+        raise ValueError("Invalid CosmosDB endpoint") from e
+
+try:
+    database_client = cosmosdb_client.get_database_client(database_name)
+except exceptions.CosmosResourceNotFoundError:
+    raise ValueError("Invalid CosmosDB database name") 
+ 
+
+try:
+    container_client = database_client.get_container_client(container_name)
+except exceptions.CosmosResourceNotFoundError:
+    raise ValueError("Invalid CosmosDB container name") 
 
 class ChatApproach(Approach, ABC):
     # Chat roles
@@ -132,6 +171,19 @@ class ChatApproach(Approach, ABC):
             chat_resp["choices"][0]["message"]["content"] = content
             chat_resp["choices"][0]["context"]["followup_questions"] = followup_questions
         chat_resp["choices"][0]["session_state"] = session_state
+
+        conversation = {
+            'id': str(uuid.uuid4()),
+            'createdAt': datetime.utcnow().isoformat(),  
+            'role': 'assistant',
+            'content': str(chat_resp["choices"][0]["message"]["content"])
+        }
+
+        try:
+            await container_client.upsert_item(conversation) 
+        except exceptions.CosmosHttpResponseError as e:
+            print(f"Error in create_convos upserting response: {e}")
+
         return chat_resp
 
     async def run_with_streaming(

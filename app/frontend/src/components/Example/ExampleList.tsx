@@ -3,9 +3,9 @@ import { Example } from "./Example";
 import styles from "./Example.module.css";
 
 const DEFAULT_EXAMPLES: string[] = [
-    "How do I find a provider’s NPI?",
-    "Where can I find blood transfusion reactions?",
-    "When should I use a Release Restriction flag?"
+    "Where can I find a provider's NPI?",
+    "When should I use a Release Restriction flag?",
+    "How do I create a flowsheet macro?"
 ];
 
 const GPT4V_EXAMPLES: string[] = [
