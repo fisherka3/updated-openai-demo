@@ -27,7 +27,7 @@ export function Component(): JSX.Element {
     const [useSemanticCaptions, setUseSemanticCaptions] = useState<boolean>(false);
     const [useGPT4V, setUseGPT4V] = useState<boolean>(false);
     const [gpt4vInput, setGPT4VInput] = useState<GPT4VInput>(GPT4VInput.TextAndImages);
-    const [excludeCategory, setExcludeCategory] = useState<string>("");
+    const [includeCategory, setIncludeCategory] = useState<string>("");
     const [question, setQuestion] = useState<string>("");
     const [vectorFieldList, setVectorFieldList] = useState<VectorFieldOptions[]>([VectorFieldOptions.Embedding, VectorFieldOptions.ImageEmbedding]);
     const [useOidSecurityFilter, setUseOidSecurityFilter] = useState<boolean>(false);
@@ -80,7 +80,7 @@ export function Component(): JSX.Element {
                         prompt_template: promptTemplate.length === 0 ? undefined : promptTemplate,
                         prompt_template_prefix: promptTemplatePrefix.length === 0 ? undefined : promptTemplatePrefix,
                         prompt_template_suffix: promptTemplateSuffix.length === 0 ? undefined : promptTemplateSuffix,
-                        exclude_category: excludeCategory.length === 0 ? undefined : excludeCategory,
+                        include_category: includeCategory.length === 0 ? undefined : includeCategory,
                         top: retrieveCount,
                         retrieval_mode: retrievalMode,
                         semantic_ranker: useSemanticRanker,
@@ -132,8 +132,8 @@ export function Component(): JSX.Element {
         setUseSemanticCaptions(!!checked);
     };
 
-    const onExcludeCategoryChanged = (_ev?: React.FormEvent, newValue?: string) => {
-        setExcludeCategory(newValue || "");
+    const onIncludeCategoryChanged = (_ev?: React.FormEvent, newValue?: string) => {
+        setIncludeCategory(newValue || "");
     };
 
     const onExampleClicked = (example: string) => {
@@ -236,7 +236,7 @@ export function Component(): JSX.Element {
                     defaultValue={retrieveCount.toString()}
                     onChange={onRetrieveCountChange}
                 />
-                <TextField className={styles.oneshotSettingsSeparator} label="Exclude category" onChange={onExcludeCategoryChanged} />
+                <TextField className={styles.oneshotSettingsSeparator} label="Exclude category" onChange={onIncludeCategoryChanged} />
                 <Checkbox
                     className={styles.oneshotSettingsSeparator}
                     checked={useSemanticRanker}

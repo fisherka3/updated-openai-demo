@@ -25,14 +25,15 @@
     justify-content: center;
     align-items: center;
     max-height: 1024px;
-    padding-top: 60px;
+    padding-top: 25px;
 }
 
 .chatEmptyStateTitle {
-    font-size: 4rem;
+    font-size: 3rem;
     font-weight: 600;
     margin-top: 0;
-    margin-bottom: 30px;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
 }
 
 .chatEmptyStateSubtitle {
@@ -97,7 +98,7 @@
 }
 
 .chatSettingsSeparator {
-    margin-top: 15px;
+    margin-top: 10px;
 }
 
 .loadingLogo {
@@ -112,4 +113,121 @@
 .commandButton {
     margin-right: 20px;
     margin-bottom: 20px;
+}
+
+.buttonContainer {
+    margin-top: 8px; /* Adjust spacing as needed */
+}
+
+.includeCategoryLabel {
+    margin-top: 15px;
+    font-weight: bold; /* Make the label bold */
+    font-size: 16px; /* Adjust font size as needed */
+}
+
+/* Ensure consistent spacing in the scrollable checkbox container */
+.scrollableCheckboxContainer .checkboxContainer {
+    gap: 8px; /* Same gap as the regular checkbox container */
+}
+
+.toggleButton {
+    cursor: pointer; /* Pointer cursor for clickable appearance */
+}
+
+.toggleButton:hover {
+    background-color: #8d8f91; /* Darker background on hover */
+}
+
+.dropdownContainer {
+    margin-top: 8px;
+    position: relative;
+    width: 300px;
+}
+
+.dropdown {
+    position: relative;
+    display: inline-block;
+    width: 100%;
+    border: 1px solid #ccc;
+    background-color: white;
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 1000;
+}
+
+.searchInput {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 10px;
+}
+
+.checkboxList {
+    padding: 5px;
+}
+
+.checkboxItem {
+    display: flex;
+    align-items: center;
+}
+
+.checkboxItem input {
+    margin-right: 8px;
+}
+
+.noResults {
+    padding: 10px;
+    color: #888;
+}
+
+.toggleButton {
+    padding: 5px 10px;
+    margin-bottom: 5px;
+    margin-top: 2px;
+    margin-left: 2px;
+    cursor: pointer;
+    background-color: #f0f0f0;
+    border: 1px solid #ccc;
+}
+
+.spinButtonContainer {
+    display: flex;
+}
+
+.customSpinButton {
+    flex-basis: 10%; /* Button takes up 10% of the container width */
+}
+
+.spinButtonLabel {
+    font-weight: 400;
+    color: #333;
+}
+
+.chatTipsHeader {
+    font-size: 1.2rem;
+    font-weight: 600;
+    text-align: left; /* Ensures the text aligns left */
+    margin-top: 20px;
+    margin-bottom: 6px;
+}
+
+.chatTips {
+    list-style-type: none; /* Removes default bullet points */
+    padding: 0; /* Removes default padding */
+    margin: 1rem 0; /* Adds space around the list */
+    font-size: 1rem; /* Keeps the text size readable but not overwhelming */
+    line-height: 1.1; /* Improves readability */
+    color: #333; /* A dark color for readability, but adjust to match your theme */
+}
+
+.chatTips li {
+    display: flex; /* Aligns icon and text in a row */
+    align-items: left; /* Vertically centers items */
+    margin-bottom: 0.75rem; /* Adds space between tips */
+}
+
+.chatTips li::before {
+    content: "✔️"; /* Uses a check mark or other icon as a bullet */
+    margin-right: 0.5rem; /* Adds space between icon and text */
+    color: #7376e1; /* Matches primary brand color (adjust as needed) */
+    font-size: 1.2rem; /* Slightly larger for emphasis */
 }

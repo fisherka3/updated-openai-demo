@@ -20,7 +20,9 @@ export type ChatAppRequestOverrides = {
     retrieval_mode?: RetrievalMode;
     semantic_ranker?: boolean;
     semantic_captions?: boolean;
-    exclude_category?: string;
+    include_category?: string;
+    include_version?: string;
+    include_audience?: string;
     top?: number;
     temperature?: number;
     prompt_template?: string;

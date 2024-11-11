@@ -30,6 +30,68 @@ import { TokenClaimsDisplay } from "../../components/TokenClaimsDisplay";
 import { GPT4VSettings } from "../../components/GPT4VSettings";
 
 const Chat = () => {
+    const categoryOptions = [
+        { key: "Tip Sheet", text: "Tip Sheet" },
+        { key: "Quick Start Guide", text: "Quick Start Guide" },
+        { key: "Reference Guide", text: "Reference Guide" },
+        { key: "FAQs", text: "FAQs" }
+        //{ key: "Unknown", text: "Unknown" }
+    ];
+
+    const versionOptions = [
+        { key: "2024Winter", text: "2024 Winter" },
+        { key: "2024Summer", text: "2024 Summer" },
+        { key: "2023Hyperdrive", text: "2023 Hyperdrive" },
+        { key: "2023Summer", text: "2023 Summer" },
+        { key: "2022Fall", text: "2022 Fall" },
+        { key: "2022Spring", text: "2022 Spring" },
+        { key: "2021Fall", text: "2021 Fall" },
+        { key: "2021Spring", text: "2021 Spring" },
+        { key: "2020Fall", text: "2020 Fall" },
+        { key: "2020Spring", text: "2020 Spring" },
+        { key: "2019", text: "2019" },
+        { key: "2018", text: "2018" },
+        { key: "2017", text: "2017" },
+        { key: "2014", text: "2014" }
+        //{ key: "None", text: "None" }
+    ];
+
+    const audienceOptions = [
+        { key: "Ambulatory Clinicians", text: "Ambulatory Clinicians" },
+        { key: "Ambulatory Providers", text: "Ambulatory Providers" },
+        {
+            key: "Ancillary Staff (PT, OT, SLP, Audiologist, Dietician, Social Worker or Chaplain)",
+            text: "Ancillary Staff (PT, OT, SLP, Audiologist, Dietician, Social Worker or Chaplain)"
+        },
+        { key: "Behavioral Health Clinician", text: "Behavioral Health Clinician" },
+        { key: "Charge Entry Staff", text: "Charge Entry Staff" },
+        { key: "Claims Staff", text: "Claims Staff" },
+        { key: "Clinical Staff (RN, LPN, MA or MTA)", text: "Clinical Staff (RN, LPN, MA or MTA)" },
+        { key: "Customer Service Staff", text: "Customer Service Staff" },
+        { key: "ED Clerk", text: "ED Clerk" },
+        { key: "ED Nurse", text: "ED Nurse" },
+        { key: "ED Provider", text: "ED Provider" },
+        { key: "Front Desk", text: "Front Desk" },
+        { key: "HIM", text: "HIM" },
+        { key: "Home Health", text: "Home Health" },
+        { key: "Hospice", text: "Hospice" },
+        { key: "Hospice IPU", text: "Hospice IPU" },
+        { key: "Informaticists", text: "Informaticists" },
+        { key: "Inpatient Peds Extended Hours", text: "Inpatient Peds Extended Hours" },
+        { key: "Insurance FollowUp Staff", text: "Insurance FollowUp Staff" },
+        { key: "Managers", text: "Managers" },
+        { key: "Medical Records/HIM Staff", text: "Medical Records/HIM Staff" },
+        { key: "Oncology Staff", text: "Oncology Staff" },
+        { key: "Other", text: "Other" },
+        { key: "Patient Access Staff", text: "Patient Access Staff" },
+        { key: "Pharmacist", text: "Pharmacist" },
+        { key: "Pharmacy Tech", text: "Pharmacy Tech" },
+        { key: "Providers (Attending, Resident, NP or PA)", text: "Providers (Attending, Resident, NP or PA)" },
+        { key: "Registration", text: "Registration" },
+        { key: "Scheduling", text: "Scheduling" },
+        { key: "Technologist", text: "Technologist" }
+    ];
+
     const [isConfigPanelOpen, setIsConfigPanelOpen] = useState(false);
     const [promptTemplate, setPromptTemplate] = useState<string>("");
     const [retrieveCount, setRetrieveCount] = useState<number>(3);
@@ -37,7 +99,15 @@ const Chat = () => {
     const [useSemanticRanker, setUseSemanticRanker] = useState<boolean>(true);
     const [shouldStream, setShouldStream] = useState<boolean>(false);
     const [useSemanticCaptions, setUseSemanticCaptions] = useState<boolean>(false);
-    const [excludeCategory, setExcludeCategory] = useState<string>("");
+
+    const [includeCategory, setIncludeCategory] = useState<string[]>([]); // Tracks unchecked categories
+    const [includeVersion, setIncludeVersion] = useState(versionOptions.map(option => option.key)); // Tracks checked versions
+    const [includeAudience, setIncludeAudience] = useState(audienceOptions.map(option => option.key)); // Tracks checked versions
+    const [isAllCategoriesChecked, setIsAllCategoriesChecked] = useState(true); // Track if all are checked or not
+    const [isAllVersionsChecked, setIsAllVersionsChecked] = useState(true);
+    const [isAllAudienceChecked, setIsAllAudienceChecked] = useState(true);
+    const [searchTerm, setSearchTerm] = useState<string>("");
+
     const [useSuggestFollowupQuestions, setUseSuggestFollowupQuestions] = useState<boolean>(false);
     const [vectorFieldList, setVectorFieldList] = useState<VectorFieldOptions[]>([VectorFieldOptions.Embedding]);
     const [useOidSecurityFilter, setUseOidSecurityFilter] = useState<boolean>(false);
@@ -136,7 +206,9 @@ const Chat = () => {
                 context: {
                     overrides: {
                         prompt_template: promptTemplate.length === 0 ? undefined : promptTemplate,
-                        exclude_category: excludeCategory.length === 0 ? undefined : excludeCategory,
+                        include_category: includeCategory.length === 0 ? "" : includeCategory.join(","),
+                        include_version: includeVersion.length === 0 ? "" : includeVersion.join(","),
+                        include_audience: includeAudience.length === 0 ? "" : includeAudience.join("|"),
                         top: retrieveCount,
                         retrieval_mode: retrievalMode,
                         semantic_ranker: useSemanticRanker,
@@ -211,9 +283,36 @@ const Chat = () => {
         setShouldStream(!!checked);
     };
 
-    const onExcludeCategoryChanged = (_ev?: React.FormEvent, newValue?: string) => {
-        setExcludeCategory(newValue || "");
+    const handleToggleCheckAllCategories = () => {
+        if (isAllCategoriesChecked) {
+            setIncludeCategory(categoryOptions.map(option => option.key)); // Uncheck all
+        } else {
+            setIncludeCategory([]); // Check all
+        }
+        setIsAllCategoriesChecked(!isAllCategoriesChecked); // Toggle the state
     };
+
+    const handleToggleCheckAllVersions = () => {
+        if (isAllVersionsChecked) {
+            setIncludeVersion([]); // Clear to indicate none are checked
+        } else {
+            setIncludeVersion(versionOptions.map(option => option.key)); // Track all versions as checked
+        }
+        setIsAllVersionsChecked(!isAllVersionsChecked);
+    };
+
+    const handleToggleCheckAllAudience = () => {
+        if (isAllAudienceChecked) {
+            setIncludeAudience([]); // Clear to indicate none are checked
+        } else {
+            setIncludeAudience(audienceOptions.map(option => option.key));
+        }
+        setIsAllAudienceChecked(!isAllAudienceChecked);
+    };
+
+    const otherOption = audienceOptions.find(option => option.key === "Other");
+    const filteredAudienceOptions = audienceOptions.filter(option => option.text.toLowerCase().includes(searchTerm.toLowerCase()));
+    const displayAudienceOptions = filteredAudienceOptions.length > 0 ? filteredAudienceOptions : otherOption ? [otherOption] : [];
 
     const onUseSuggestFollowupQuestionsChange = (_ev?: React.FormEvent<HTMLElement | HTMLInputElement>, checked?: boolean) => {
         setUseSuggestFollowupQuestions(!!checked);
@@ -262,9 +361,28 @@ const Chat = () => {
                 <div className={styles.chatContainer}>
                     {!lastQuestionRef.current ? (
                         <div className={styles.chatEmptyState}>
-                            <SparkleFilled fontSize={"120px"} primaryFill={"rgba(115, 118, 225, 1)"} aria-hidden="true" aria-label="Chat logo" />
-                            <h1 className={styles.chatEmptyStateTitle}>Chat with your Epic Tip Sheets</h1>
-                            <h2 className={styles.chatEmptyStateSubtitle}>Ask anything about Epic or try an example</h2>
+                            {/* <SparkleFilled fontSize={"120px"} primaryFill={"rgba(115, 118, 225, 1)"} aria-hidden="true" aria-label="Chat logo" /> */}
+                            <h1 className={styles.chatEmptyStateTitle}>Chat with Epic Tip Sheets</h1>
+                            <h3 className={styles.chatTipsHeader}>Helpful Tips</h3> {/* New small header */}
+                            <ul className={styles.chatTips}>
+                                <li>
+                                    <strong>Interact Like a Chatbot</strong>: Ask questions conversationally for the best responses.
+                                </li>
+                                <li>
+                                    <strong>Include Details</strong>: Include relevant information about yourself (e.g., role, department) for more tailored
+                                    results.
+                                </li>
+                                <li>
+                                    <strong>Scroll to Verify</strong>: Check the full document citation for context and accuracy by scrolling down to the
+                                    relevant section.
+                                </li>
+                                <li>
+                                    <strong>Try Filters</strong>: Access filters for document type, audience, and Epic version under
+                                    <strong>&nbsp;Search Settings&nbsp;</strong>
+                                    to refine your results.
+                                </li>
+                            </ul>
+                            <h2 className={styles.chatEmptyStateSubtitle}>Ask a question about Epic or try an example below to get started.</h2>
                             <ExampleList onExampleClicked={onExampleClicked} useGPT4V={useGPT4V} />
                         </div>
                     ) : (
@@ -349,7 +467,7 @@ const Chat = () => {
                 )}
 
                 <Panel
-                    headerText="Configure answer generation"
+                    headerText="Configuration Panel"
                     isOpen={isConfigPanelOpen}
                     isBlocking={false}
                     onDismiss={() => setIsConfigPanelOpen(false)}
@@ -357,24 +475,123 @@ const Chat = () => {
                     onRenderFooterContent={() => <DefaultButton onClick={() => setIsConfigPanelOpen(false)}>Close</DefaultButton>}
                     isFooterAtBottom={true}
                 >
-                    <TextField
+                    {/* <TextField
                         className={styles.chatSettingsSeparator}
                         defaultValue={promptTemplate}
                         label="Override prompt template"
                         multiline
                         autoAdjustHeight
                         onChange={onPromptTemplateChange}
-                    />
+                    /> */}
 
-                    <SpinButton
-                        className={styles.chatSettingsSeparator}
-                        label="Retrieve this many search results:"
-                        min={1}
-                        max={50}
-                        defaultValue={retrieveCount.toString()}
-                        onChange={onRetrieveCountChange}
-                    />
-                    <TextField className={styles.chatSettingsSeparator} label="Exclude category" onChange={onExcludeCategoryChanged} />
+                    <div className={styles.spinButtonContainer}>
+                        <label className={styles.spinButtonLabel}>Retrieve this many search index results:</label>
+                        <SpinButton
+                            className={styles.customSpinButton}
+                            min={1}
+                            max={10}
+                            defaultValue={retrieveCount.toString()}
+                            onChange={onRetrieveCountChange}
+                        />
+                    </div>
+                    <div className={styles.dropdownContainer}>
+                        <label className={styles.includeCategoryLabel}>Include Document Type:</label>
+                        <div className={styles.checkboxList}>
+                            <button className={styles.toggleButton} onClick={handleToggleCheckAllCategories}>
+                                {isAllCategoriesChecked ? "Uncheck All" : "Check All"}
+                            </button>
+
+                            {categoryOptions.map(option => (
+                                <div key={option.key} className={styles.checkboxItem}>
+                                    <input
+                                        type="checkbox"
+                                        id={`category-option-${option.key}`}
+                                        checked={!includeCategory.includes(option.key)}
+                                        onChange={() => {
+                                            setIncludeCategory(prev =>
+                                                prev.includes(option.key) ? prev.filter(key => key !== option.key) : [...prev, option.key]
+                                            );
+                                        }}
+                                    />
+                                    <label htmlFor={`category-option-${option.key}`}>{option.text}</label>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className={styles.dropdownContainer}>
+                        <label className={styles.includeCategoryLabel}>Include Epic Version:</label>
+
+                        {/* Dropdown Container */}
+                        <div className={styles.dropdown}>
+                            {/* Toggle Button */}
+                            <button className={styles.toggleButton} onClick={handleToggleCheckAllVersions}>
+                                {isAllVersionsChecked ? "Uncheck All" : "Check All"}
+                            </button>
+                            {/* Dropdown content with checkboxes */}
+                            <div className={styles.checkboxList}>
+                                {versionOptions.map(option => (
+                                    <div key={option.key} className={styles.checkboxItem}>
+                                        <input
+                                            type="checkbox"
+                                            id={`version-option-${option.key}`}
+                                            checked={includeVersion.includes(option.key)}
+                                            onChange={() => {
+                                                setIncludeVersion(prev =>
+                                                    prev.includes(option.key) ? prev.filter(key => key !== option.key) : [...prev, option.key]
+                                                );
+                                            }}
+                                        />
+                                        <label htmlFor={`version-option-${option.key}`}>{option.text}</label>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className={styles.dropdownContainer}>
+                        <label className={styles.includeCategoryLabel}>Include Audience:</label>
+
+                        {/* Search Box */}
+                        <input
+                            type="text"
+                            placeholder="Search Audience..."
+                            value={searchTerm}
+                            onChange={e => setSearchTerm(e.target.value)}
+                            className={styles.searchInput}
+                        />
+
+                        {/* Dropdown Container */}
+                        <div className={styles.dropdown}>
+                            <button className={styles.toggleButton} onClick={handleToggleCheckAllAudience}>
+                                {isAllAudienceChecked ? "Uncheck All" : "Check All"}
+                            </button>
+
+                            {/* Dropdown content with checkboxes */}
+                            <div className={styles.checkboxList}>
+                                {displayAudienceOptions.length > 0 ? (
+                                    displayAudienceOptions.map(option => (
+                                        <div key={option.key} className={styles.checkboxItem}>
+                                            <input
+                                                type="checkbox"
+                                                id={`audience-option-${option.key}`}
+                                                checked={includeAudience.includes(option.key)}
+                                                onChange={() => {
+                                                    setIncludeAudience(prev =>
+                                                        prev.includes(option.key) ? prev.filter(key => key !== option.key) : [...prev, option.key]
+                                                    );
+                                                }}
+                                            />
+                                            <label htmlFor={`audience-option-${option.key}`}>{option.text}</label>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <div className={styles.noResults}>No results found</div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                    {/* <TextField className={styles.chatSettingsSeparator} label="Exclude category" onChange={onExcludeCategoryChanged} />
                     <Checkbox
                         className={styles.chatSettingsSeparator}
                         checked={useSemanticRanker}
@@ -410,7 +627,7 @@ const Chat = () => {
                         showImageOptions={useGPT4V && showGPT4VOptions}
                         updateVectorFields={(options: VectorFieldOptions[]) => setVectorFieldList(options)}
                         updateRetrievalMode={(retrievalMode: RetrievalMode) => setRetrievalMode(retrievalMode)}
-                    />
+                    /> */}
 
                     {useLogin && (
                         <Checkbox
@@ -431,12 +648,12 @@ const Chat = () => {
                         />
                     )}
 
-                    <Checkbox
+                    {/* <Checkbox
                         className={styles.chatSettingsSeparator}
                         checked={shouldStream}
                         label="Stream chat completion responses"
                         onChange={onShouldStreamChange}
-                    />
+                    /> */}
                     {useLogin && <TokenClaimsDisplay />}
                 </Panel>
             </div>

@@ -4,6 +4,7 @@ import { Stack, TextField } from "@fluentui/react";
 import { Button, Tooltip, Field, Textarea } from "@fluentui/react-components";
 import { Send28Filled } from "@fluentui/react-icons";
 import { isLoggedIn, requireAccessControl } from "../../authConfig";
+import { SpeechInput } from "./SpeechInput";
 
 import styles from "./QuestionInput.module.css";
 
@@ -75,6 +76,7 @@ export const QuestionInput = ({ onSend, disabled, placeholder, clearOnSend, init
                     <Button size="large" icon={<Send28Filled primaryFill="rgba(115, 118, 225, 1)" />} disabled={sendQuestionDisabled} onClick={sendQuestion} />
                 </Tooltip>
             </div>
+            {<SpeechInput updateQuestion={setQuestion} />}
         </Stack>
     );
 };

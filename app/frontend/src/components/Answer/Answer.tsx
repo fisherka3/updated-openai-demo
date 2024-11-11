@@ -80,7 +80,9 @@ export const Answer = ({
                     </Stack>
                 </Stack.Item>
             )}
-
+            <Stack.Item className={styles.answerDisclaimerContainer}>
+                <span className={styles.answerDisclaimer}>This chatbot is an assistive tool. Please verify all information for accuracy.</span>
+            </Stack.Item>
             {!!followupQuestions?.length && showFollowupQuestions && onFollowupQuestionClicked && (
                 <Stack.Item>
                     <Stack horizontal wrap className={`${!!parsedAnswer.citations.length ? styles.followupQuestionsList : ""}`} tokens={{ childrenGap: 6 }}>

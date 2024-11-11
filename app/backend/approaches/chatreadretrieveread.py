@@ -94,25 +94,25 @@ class ChatReadRetrieveReadApproach(ChatApproach):
 
     @property
     def system_message_chat_conversation(self):
-        prompt = "You are an assistant helping users of Epic software answer questions about how to perform tasks using Epic. " +\
-        "Below is a history of the conversation so far followed by a new user question. " +\
-        """The user will provide a question along with a list of sources and information from the sources. For example: 
+        prompt = "You are an assistant helping users of Epic software answer questions and find information. " +\
+        "Above is a history of the conversation so far. " +\
+        """The user will provide a question along with a list of sources and information from the sources. 
+        Each source has a name followed by a newline and then then actual information. For example: 
         user question 
-        Sources: 
-        info1.pdf: information from info1, 
-        info2.pdf: information from info2, 
-        info3.pdf: information from info3 
+        Sources: info1.pdf#page=3 \n information from info1.pdf#page=3, \n
+        info2.pdf#page=6 \n information from info2.pdf#page=6, \n
+        info3.pdf#page=2 \n information from info3.pdf#page=2 \n
         """ +\
-        "Use ONLY the information contained within the sources to answer user's questions. " +\
+        "Answer ONLY with the facts listed in the list of sources below. " +\
         "Concisely answer ONLY the question asked by using ONLY the information from the sources provided by the user. " +\
-        "DO NOT generate responses that don't use information from the sources! " +\
+        "Do not generate answers that don't use the sources below. " +\
         "If there isn't enough information provided in the sources, then say you don't know. " +\
         "If asking a clarifying question to the user would help, then ask the question. " +\
-        "Do not provide tables or use examples within your response. " +\
-        "Do not bold text in your response. " +\
-        "You must ALWAYS include the source name for each fact you use in your response." +\
-        "Use square brackets to reference the source, for example [info1.pdf]. "+\
-        """Do not combine sources, you must list each source referenced separately, for example: [info1.pdf][info2.pdf]. 
+        "Do not fomat your response with markdown, use plain text. " +\
+        "Always include the source name for each fact you use in the response. " +\
+        "Use square brackets to reference the source, for example [info1.pdf#page=3]. " +\
+        """Do not combine sources, you must list each source referenced separately, for example: [info1.pdf#page=3][info2.pdf#page=6][info3.pdf#page=2]. " +\
+        "Other than adding brackets, do not alter the source, use the file or link provided as is."
         {follow_up_questions_prompt}
         {injected_prompt}
         """
@@ -167,27 +167,6 @@ class ChatReadRetrieveReadApproach(ChatApproach):
         except exceptions.CosmosHttpResponseError as e:
             print(f"Error in create_convos upserting question: {e}")
     
-
-        ignore_words_list = ['epic', 'tipsheet', 'guide']
-
-        repeat_prompt = "You are an assistant helping users of Epic software answer questions about how to perform tasks using Epic. " +\
-        "Above is a history of the conversation so far. " +\
-        """The user will provide a new question along with a list of sources and information from the sources. For example: 
-        user question 
-        Sources: 
-        info1.pdf: information from info1, 
-        info2.pdf: information from info2, 
-        info3.pdf: information from info3 
-        """ +\
-        "Use ONLY the information contained within the sources to answer user's questions. " +\
-        "Concisely answer ONLY the question asked by using ONLY the information from the sources provided by the user. " +\
-        "DO NOT generate responses that don't use information from the sources! " +\
-        "If there isn't enough information provided in the sources, then say you don't know. " +\
-        "If asking a clarifying question to the user would help, then ask the question. " +\
-        "Do not provide tables or use examples within your response. " +\
-        "You must ALWAYS include the source name for each fact you use in your response." +\
-        "Use square brackets to reference the source, for example [info1.pdf]. " +\
-        "Do not combine sources, you must list each source referenced separately, for example: [info1.pdf][info2.pdf]. "
 
         last_response = ""
         all_hx = []
@@ -261,16 +240,6 @@ class ChatReadRetrieveReadApproach(ChatApproach):
         if not has_text:
             query_text = None
 
-        og_query_text = query_text
-
-        for word in ignore_words_list:
-            if word != 'epic':
-                query_text = re.sub(r'(?i)'+ word + "(\s|$|s)", "", query_text)
-            else:
-                query_text = re.sub(r"(?i)("+ word + "(\s|$))|(" + word + "s(\s|$))", "", query_text)
-        
-        if query_text.strip() == "": query_text = query_text.strip() + og_query_text
-
         all_hx.append({'role': 'assistant1', 'content': query_text})
 
         conversation = {
@@ -330,8 +299,8 @@ class ChatReadRetrieveReadApproach(ChatApproach):
             max_tokens=messages_token_limit,
         )
 
-        if len(chat_messages) > 5:
-            chat_messages[-1:-1] = [{'role':'system', 'content': repeat_prompt}]
+        if len(chat_messages) > 4:
+            chat_messages = [chat_messages[0]] + chat_messages[-3:]
 
         data_points = {"text": sources_content}
 
@@ -356,7 +325,7 @@ class ChatReadRetrieveReadApproach(ChatApproach):
                 ThoughtStep(
                     "Generated search query",
                     query_text,
-                    {"use_semantic_captions": use_semantic_captions, "has_vector": has_vector},
+                    {"use_semantic_captions": use_semantic_captions, "has_vector": has_vector, "include_category": filter},
                 ),
                 ThoughtStep(
                     "history:",

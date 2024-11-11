@@ -94,14 +94,85 @@ class Approach:
         self.openai_host = openai_host
 
     def build_filter(self, overrides: dict[str, Any], auth_claims: dict[str, Any]) -> Optional[str]:
-        exclude_category = overrides.get("exclude_category") or None
+
+        others = ["Admission Staff",
+            "Surgeon/Provider",
+            "Payment Posting Staff",
+            "Infection Preventionists",
+            "ROI Staff",
+            "OR Manager",
+            "Central Scheduler",
+            "IntraOp RN",
+            "Radiologist",
+            "Coders",
+            "Credentialed Trainers",
+            "Credit Analysts",
+            "EpicCare Link",
+            "Anesthesiologist",
+            "Community Connect",
+            "OR Scheduler",
+            "Pre/Post RN",
+            "Ambulatory Pharmacist",
+            "Financial Counselors",
+            "CRNA",
+            "Nurse Triage",
+            "PACU RN",
+            "Self Pay Staff",
+            "Deficiency Analyst",
+            "Lab Staff",
+            "Registration / Scheduling (Pre-registration, Virtual Registration, Auth/Cert or Front Desk)",
+            "Auth/Cert",
+            "Charge Poster",
+            "PAT RN",
+            "Bed Planners",
+            "Transport Staff",
+            "Advanced Care",
+            "Interventional Technologist",
+            "Nurse Liaison",
+            "Research Billing Staff",
+            "Clinic Surgery Coordinator",
+            "Electronic Imaging Technicians (EIT)",
+            "Interventional Scheduler",
+            "PACE",
+            "Pre/Post Tech",
+            "SNRA",
+            "Unit Clerk",
+            "Audit/Compliance Staff",
+            "Financial Coders",
+            "PACU Tech",
+            "Patient Placement Staff"
+        ]
+
+        include_category = overrides.get("include_category") or None
+        include_version = overrides.get("include_version") or None
+        include_audience = overrides.get("include_audience") or None
         security_filter = self.auth_helper.build_security_filters(overrides, auth_claims)
         filters = []
-        if exclude_category:
-            filters.append("category ne '{}'".format(exclude_category.replace("'", "''")))
+
+        if include_category:
+            category_filter_expression = " and ".join([f"category ne '{item.strip()}'" for item in include_category.split(",")])
+            filters.append(category_filter_expression)
+
+        if include_version:
+            if len(include_version.split(",")) < 14:
+                version_filter_expression = " or ".join([f"version eq '{item.strip()}'" for item in include_version.split(",")])
+                version_filter_expression += "or version eq 'None'"
+                filters.append(version_filter_expression)
+
+        if include_audience:
+            if len(include_audience.split("|")) < 30:
+                audience_list = [item.strip() for item in include_audience.split("|")]
+                expanded_audience_list = [item if item != 'Other' else others for item in audience_list]
+                flat_audience_list = [aud for sublist in expanded_audience_list for aud in (sublist if isinstance(sublist, list) else [sublist])]
+                audience_filter_parts = [f"a eq '{item}'" for item in flat_audience_list]
+                audience_filter_parts.append("a eq 'None'")
+                audience_filter_parts.append("a eq 'All Staff'")
+                filters.append(f"audience/any(a: {' or '.join(audience_filter_parts)})")
+
         if security_filter:
             filters.append(security_filter)
-        return None if len(filters) == 0 else " and ".join(filters)
+
+        return None if len(filters) == 0 else " and ".join(f"({item})" for item in filters)
 
     async def search(
         self,
@@ -156,13 +227,13 @@ class Approach:
         if use_semantic_captions:
             return [
                 (self.get_citation((doc.sourcepage or ""), use_image_citation))
-                + ": "
+                + " \n "
                 + nonewlines(" . ".join([cast(str, c.text) for c in (doc.captions or [])]))
                 for doc in results
             ]
         else:
             return [
-                (self.get_citation((doc.sourcepage or ""), use_image_citation)) + ": " + nonewlines(doc.content or "")
+                (self.get_citation((doc.sourcepage or ""), use_image_citation)) + "  \n " + nonewlines(doc.content or "")
                 for doc in results
             ]
 

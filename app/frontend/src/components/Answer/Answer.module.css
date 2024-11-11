@@ -135,3 +135,25 @@ sup {
     content: "";
     animation: loading 1s infinite;
 }
+
+.answerDisclaimerContainer {
+    justify-content: left;
+    display: flex;
+    margin-top: 20px;
+}
+
+.answerDisclaimer {
+    font-style: normal;
+    font-weight: 400;
+    font-size: 14px;
+    line-height: 16px;
+    display: flex;
+    align-items: left;
+    text-align: left;
+    color: #707070;
+    flex: none;
+    order: 1;
+    flex-grow: 0;
+    max-width: 100%;
+    word-wrap: break-word;
+}
