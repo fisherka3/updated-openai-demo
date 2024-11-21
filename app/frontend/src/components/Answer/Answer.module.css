@@ -18,7 +18,14 @@
     line-height: 22px;
     padding-top: 16px;
     padding-bottom: 16px;
-    white-space: pre-line;
+    /* white-space: pre-line; */
+}
+/* NEW */
+.answerText h1,
+h2,
+h2 {
+    font-size: 1rem;
+    font-weight: bold;
 }
 
 .answerText table {

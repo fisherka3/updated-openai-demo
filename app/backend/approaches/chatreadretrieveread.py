@@ -108,7 +108,6 @@ class ChatReadRetrieveReadApproach(ChatApproach):
         "Do not generate answers that don't use the sources below. " +\
         "If there isn't enough information provided in the sources, then say you don't know. " +\
         "If asking a clarifying question to the user would help, then ask the question. " +\
-        "Do not fomat your response with markdown, use plain text. " +\
         "Always include the source name for each fact you use in the response. " +\
         "Use square brackets to reference the source, for example [info1.pdf#page=3]. " +\
         """Do not combine sources, you must list each source referenced separately, for example: [info1.pdf#page=3][info2.pdf#page=6][info3.pdf#page=2]. " +\

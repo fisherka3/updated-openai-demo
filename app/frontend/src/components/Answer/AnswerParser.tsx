@@ -36,9 +36,12 @@ export function parseAnswerToHtml(answer: string, isStreaming: boolean, onCitati
             let citationIndex: number;
             if (citations.indexOf(part) !== -1) {
                 citationIndex = citations.indexOf(part) + 1;
-            } else {
+            } else if (part.includes(".pdf")) {
+                // Check for '.pdf' -- other wise is parsing all bracketed text as a citation
                 citations.push(part);
                 citationIndex = citations.length;
+            } else {
+                return ""; // Skip invalid citations without pushing them
             }
 
             const path = getCitationFilePath(part);
