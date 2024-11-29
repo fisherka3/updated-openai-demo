@@ -1,6 +1,6 @@
 import { Outlet, NavLink, Link } from "react-router-dom";
 
-import github from "../../assets/github.svg";
+import UPHLogoLong from "../../assets/UPHLogoLong.png";
 
 import styles from "./Layout.module.css";
 
@@ -16,22 +16,12 @@ const Layout = () => {
                     <Link to="/" className={styles.headerTitleContainer}>
                         <h3 className={styles.headerTitle}>Chatty for Epic Tip Sheets</h3>
                     </Link>
-                    <nav>
-                        {/* Update LOGO?
-                         <li className={styles.headerNavLeftMargin}>
-                            <a href="https://aka.ms/entgptsearch" target={"_blank"} title="Github repository link">
-                                <img
-                                    src={github}
-                                    alt="Github logo"
-                                    aria-label="Link to github repository"
-                                    width="20px"
-                                    height="20px"
-                                    className={styles.githubLogo}
-                                />
-                            </a>
-                        </li> */}
-                    </nav>
-                    <h4 className={styles.headerRightText}>UnityPoint Health</h4>
+                    <div className={styles.headerNavLeftMargin}>
+                        <div className={styles.logoContainer}>
+                            <img src={UPHLogoLong} className={styles.logoImage} aria-hidden="true" />
+                        </div>
+                    </div>
+                    {/* <h4 className={styles.headerRightText}>UnityPoint Health</h4> */}
                     {useLogin && <LoginButton />}
                 </div>
             </header>

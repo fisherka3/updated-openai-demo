@@ -76,3 +76,18 @@
 .githubLogo {
     height: 20px;
 }
+
+.logoContainer {
+    background-color: #f0f0f0; /* off-white/gray background */
+    display: inline-block; /* Keeps the container tight around the image */
+    padding: 10px; /* Optional: adjust padding to control the space around the image */
+    height: 50px;
+    max-height: 100%;
+}
+
+.logoImage {
+    display: block; /* Removes any unwanted space below the image */
+    max-width: 100%; /* Make sure the image scales appropriately */
+    height: auto; /* Maintains the aspect ratio */
+    max-height: 100%;
+}

@@ -74,6 +74,7 @@ const Chat = () => {
         { key: "Front Desk", text: "Front Desk" },
         { key: "HIM", text: "HIM" },
         { key: "Home Health", text: "Home Health" },
+        { key: "Home Infusion", text: "Home Infusion" },
         { key: "Hospice", text: "Hospice" },
         { key: "Hospice IPU", text: "Hospice IPU" },
         { key: "Informaticists", text: "Informaticists" },
